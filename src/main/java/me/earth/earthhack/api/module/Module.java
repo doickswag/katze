@@ -50,6 +50,9 @@ public abstract class Module extends SettingContainer
     private final Setting<Toggle> bindMode =
         register(new EnumSetting<>("Toggle", Toggle.Normal))
             .setComplexity(Complexity.Medium);
+    private final Setting<Boolean> notify =
+            register(new BooleanSetting("Notify",true))
+                    .setComplexity(Complexity.Beginner);
 
     private final Category category;
     private ModuleData<?> data;
@@ -212,6 +215,8 @@ public abstract class Module extends SettingContainer
     {
         return hidden.getValue();
     }
+
+    public Boolean isNotify() { return notify.getValue(); }
 
     protected void onEnable()
     {

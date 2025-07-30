@@ -1,11 +1,13 @@
 package me.earth.earthhack.impl.modules.client.notifications;
 
+import com.mojang.realmsclient.gui.ChatFormatting;
 import me.earth.earthhack.api.event.bus.EventListener;
 import me.earth.earthhack.api.event.bus.instance.Bus;
 import me.earth.earthhack.api.module.Module;
 import me.earth.earthhack.api.module.util.Category;
 import me.earth.earthhack.api.setting.Setting;
 import me.earth.earthhack.api.setting.settings.BooleanSetting;
+import me.earth.earthhack.api.setting.settings.ColorSetting;
 import me.earth.earthhack.api.setting.settings.EnumSetting;
 import me.earth.earthhack.api.setting.settings.NumberSetting;
 import me.earth.earthhack.impl.event.events.client.PostInitEvent;
@@ -13,12 +15,15 @@ import me.earth.earthhack.impl.event.events.render.Render2DEvent;
 import me.earth.earthhack.impl.event.listeners.LambdaListener;
 import me.earth.earthhack.impl.gui.visibility.Visibilities;
 import me.earth.earthhack.impl.managers.Managers;
+import me.earth.earthhack.impl.modules.client.colors.Colors;
 import me.earth.earthhack.impl.util.math.StopWatch;
 import me.earth.earthhack.impl.util.render.Render2DUtil;
 import me.earth.earthhack.impl.util.text.ChatIDs;
 import me.earth.earthhack.impl.util.text.TextColor;
 import net.minecraft.entity.Entity;
+import net.minecraft.util.text.TextFormatting;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -52,14 +57,15 @@ public class Notifications extends Module
             register(new EnumSetting<>("Left-Color", TextColor.None));
     protected final Setting<TextColor> enteredColor =
             register(new EnumSetting<>("Entered-Color", TextColor.None));
-    protected final Setting<Boolean> modules     =
-            register(new BooleanSetting("Modules", true));
+    protected final Setting<Color> color =
+            register(new ColorSetting("Color",Color.RED));
+    protected final Setting<Mode> mode =
+            register(new EnumSetting<Mode>("Mode",Mode.New));
     protected final Setting<Boolean> configure   =
             register(new BooleanSetting("Show-Modules", true));
     protected final Setting<Category.CategoryEnum> categories =
             register(new EnumSetting<>("Categories", Category.CategoryEnum.Combat));
 
-    protected final Map<Module, Setting<Boolean>> announceMap = new HashMap<>();
     protected final StopWatch timer = new StopWatch();
 
     boolean hudnotify = false;
@@ -105,7 +111,6 @@ public class Notifications extends Module
     }
     private void createSettings()
     {
-        announceMap.clear();
         Visibilities.VISIBILITY_MANAGER
                 .registerVisibility(categories, configure::getValue);
 
@@ -122,8 +127,7 @@ public class Notifications extends Module
             {
                 if (isEnabled()
                         && !event.isCancelled()
-                        && modules.getValue()
-                        && announceMap.get(module).getValue())
+                        && module.isNotify())
                 {
                     onToggleModule((Module) event.getSetting().getContainer(),
                                             event.getValue());
@@ -136,7 +140,6 @@ public class Notifications extends Module
             Setting<Boolean> setting =
                     register(new BooleanSetting(name, false));
 
-            announceMap.put(module, setting);
 
             Visibilities.VISIBILITY_MANAGER.registerVisibility(setting,
                     () -> configure.getValue()
@@ -150,16 +153,7 @@ public class Notifications extends Module
 
     protected void onToggleModule(Module module, boolean enabled)
     {
-        Setting<Boolean> setting = announceMap.get(module);
-        if (setting != null && setting.getValue())
-        {
-            String message = TextColor.BOLD
-                    + module.getDisplayName()
-                    + (enabled ? TextColor.GREEN : TextColor.RED)
-                    + (enabled ? " enabled" : " disabled");
-
-            sendNotification(message, module.getName(), ChatIDs.MODULE, true);
-        }
+        sendNotification(mode.getValue().getMessage(module,enabled,color.getValue()), module.getName(), ChatIDs.MODULE, true);
     }
 
     public void onPop(Entity player, int totemPops)
@@ -236,5 +230,29 @@ public class Notifications extends Module
         // remember that this uses inverted coords!!
         Render2DUtil.drawRect(posX.getValue() - Managers.TEXT.getStringWidth(messageEvent) - 1.0f, posY.getValue() - Managers.TEXT.getStringHeight() - 1.0f, posX.getValue(), posY.getValue() - 1.0f,0xaa454545);
         RENDERER.drawString(messageEvent, posX.getValue() - Managers.TEXT.getStringWidth(messageEvent), posY.getValue() - Managers.TEXT.getStringHeight(), 0xffffffff);
+    }
+
+    public enum Mode {
+        Old() {
+            @Override
+            public String getMessage(Module module, boolean enabled, Color color) {
+                return TextColor.BOLD
+                        + module.getDisplayName()
+                        + (enabled ? TextColor.GREEN : TextColor.RED)
+                        + (enabled ? " enabled" : " disabled");
+            }
+        },
+        New() {
+            @Override
+            public String getMessage(Module module, boolean enabled,Color color) {
+                return String.format("[%sKatze]%s %s %s%s",
+                        TextColor.DARK_RED,
+                        TextColor.RESET,
+                        module.getDisplayName(),
+                        enabled ? TextColor.GREEN: TextColor.RED,
+                        enabled ? "enabled" : "disabled");
+            }
+        };
+        public abstract String getMessage(Module module, boolean enabled, Color color);
     }
 }
