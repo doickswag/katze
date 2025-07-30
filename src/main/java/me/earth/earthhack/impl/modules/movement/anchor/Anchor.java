@@ -21,6 +21,7 @@ import me.earth.earthhack.impl.modules.movement.reversestep.ReverseStep;
 import me.earth.earthhack.impl.modules.movement.speed.Speed;
 import me.earth.earthhack.impl.modules.movement.speed.SpeedMode;
 import me.earth.earthhack.impl.modules.movement.step.Step;
+import me.earth.earthhack.impl.modules.player.timer.Timer;
 import me.earth.earthhack.impl.modules.render.holeesp.invalidation.AirHoleFinder;
 import me.earth.earthhack.impl.modules.render.holeesp.invalidation.Hole;
 import me.earth.earthhack.impl.modules.render.holeesp.invalidation.HoleManager;
@@ -108,6 +109,7 @@ public class Anchor extends Module
                                    .orElse(null);
             if (hole == null)
             {
+                Managers.TIMER.reset();
                 return;
             }
 
@@ -138,11 +140,13 @@ public class Anchor extends Module
             double x = (hole.getX() + (hole.getMaxX() - hole.getX()) / 2.0) - mc.player.posX;
             double z = (hole.getZ() + (hole.getMaxZ() - hole.getZ()) / 2.0) - mc.player.posZ;
             double distance = Math.sqrt(x * x + z * z);
-            event.setY(modify(yMode.getValue(), event.getY(), y.getValue()));
+            if (yMode.getValue() != Mode.Timer) event.setY(modify(yMode.getValue(), event.getY(), y.getValue()));
+            else Managers.TIMER.setTimer(y.getValue().floatValue());
             if (distance == 0.0)
             {
                 event.setX(0.0);
                 event.setY(0.0);
+                Managers.TIMER.reset();
                 return;
             }
 
@@ -160,12 +164,13 @@ public class Anchor extends Module
         data.register(yMode, "-Factor will multiply your vertical speed with the Y-Speed setting." +
                 "\n-Constant will set your vertical speed to the Y-Speed setting." +
                 "\n-Add will add the Y-Speed setting to your vertical speed." +
-                "\n-Off won't change your speed in the vertical direction.");
+                "\n-Off won't change your speed in the vertical direction." +
+                "\n-Timer wiil set timer");
         data.register(y, "Speed in the vertical direction, configurable by Y-Mode.");
         data.register(xzMode, "-Factor will multiply your horizontal speed with the XZ-Speed setting." +
                 "\n-Constant will set your horizontal speed to the XZ-Speed setting." +
                 "\n-Add will add the XZ-Speed setting to your horizontal speed." +
-                "\n-Off won't change your speed in the horizontal direction.");
+                "\n-Off/Timer won't change your speed in the horizontal direction.");
         data.register(xz, "Speed in the horizontal direction, configurable by XZ-Mode.");
         data.register(yOffset, "Offset to the bottom of the hole when calculating distance.");
         data.register(withSpeedInstant, "Exception to UseWithSpeed for Speed Mode - Instant.");
@@ -228,6 +233,7 @@ public class Anchor extends Module
     public enum Mode
     {
         Factor,
+        Timer,
         Constant,
         Add,
         Off
