@@ -83,6 +83,10 @@ public class Speedmine extends Module
     protected final Setting<ESPMode> esp       =
             register(new EnumSetting<>("ESP", ESPMode.Outline))
                 .setComplexity(Complexity.Medium);
+    protected final Setting<Color> color1 =
+            register(new ColorSetting("BeginColor",Color.RED));
+    protected final Setting<Color> color2 =
+            register(new ColorSetting("EndColor",Color.GREEN));
     protected final Setting<Integer> alpha     =
             register(new NumberSetting<>("BlockAlpha", 100, 0, 255))
                 .setComplexity(Complexity.Medium);

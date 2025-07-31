@@ -245,7 +245,7 @@ public class Notifications extends Module
         New() {
             @Override
             public String getMessage(Module module, boolean enabled,Color color) {
-                return String.format("[%sKatze]%s %s %s%s",
+                return String.format("[%sKatze%s] %s %s%s",
                         TextColor.DARK_RED,
                         TextColor.RESET,
                         module.getDisplayName(),

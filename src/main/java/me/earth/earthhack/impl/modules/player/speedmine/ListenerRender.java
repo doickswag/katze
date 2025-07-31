@@ -33,7 +33,7 @@ final class ListenerRender extends ModuleListener<Speedmine, Render3DEvent>
             }
 
             AxisAlignedBB bb = Interpolation.interpolateAxis(renderBB);
-            module.esp.getValue().drawEsp(module, bb, max);
+            module.esp.getValue().drawEsp(module, bb, max,module.color1.getValue(),module.color2.getValue());
 
             GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
             GL11.glPopAttrib();
